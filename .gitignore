@@ -7,7 +7,6 @@
 
 # CI packaging artifacts
 /*.tgz
+*.fpk
 /release-assets/
-/package/app.tgz
-/package/app/*
-!/package/app/.gitkeep
+/package_aarch64/app.tgz

@@ -1,0 +1,17 @@
+services:
+  redroid:
+    image: makedie/redroid:cnflysky-redroid-rk3588-lineage-20-202601241104
+    container_name: redroid
+    privileged: true
+    ports:
+      - "5555:5555"
+    volumes:
+      - "${TRIM_PKGHOME}/data:/data"
+      - "/dev/mali0:/dev/mali0"
+    command:
+      - "androidboot.redroid_width=1080"
+      - "androidboot.redroid_height=1920"
+      - "androidboot.redroid_magisk=1"
+      - "androidboot.redroid_fake_wifi=1"
+      - "androidboot.redroid_fake_wifi_ssid=fnnas"
+      - "ro.build.characteristics=default"

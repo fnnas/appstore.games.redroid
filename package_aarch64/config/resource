@@ -1,0 +1,12 @@
+{
+    "docker-project":
+    {
+        "projects":
+        [
+            {
+                "name": "appstore-games-redroid",
+                "path": "docker"
+            }
+        ]
+    }
+}

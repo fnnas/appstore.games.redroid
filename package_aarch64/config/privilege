@@ -1,0 +1,8 @@
+{
+    "defaults":
+    {
+        "run-as": "package"
+    },
+    "username": "docker-appstore-games-redroid",
+    "groupname": "docker-appstore-games-redroid"
+}
