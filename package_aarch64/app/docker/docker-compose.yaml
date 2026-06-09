@@ -6,7 +6,7 @@ services:
     ports:
       - "5555:5555"
     volumes:
-      - "${TRIM_PKGHOME}/data:/data"
+      - "redroid-data:/data"
       - "/dev/mali0:/dev/mali0"
     command:
       - "androidboot.redroid_width=1080"
@@ -15,3 +15,7 @@ services:
       - "androidboot.redroid_fake_wifi=1"
       - "androidboot.redroid_fake_wifi_ssid=fnnas"
       - "ro.build.characteristics=default"
+
+volumes:
+  redroid-data:
+    name: appstore-games-redroid12-data
