@@ -2,7 +2,5 @@
 
 ### This script is called after the user upgrades the application.
 
-mkdir -p "${TRIM_PKGHOME}/data"
-chown -R "${TRIM_USERNAME}:${TRIM_GROUPNAME}" "${TRIM_PKGHOME}/data"
 
 exit 0
