@@ -11,3 +11,4 @@ maintainer_url        = https://github.com/CNflysky/redroid-rk3588
 distributor           = GreenDamTan
 distributor_url       = https://github.com/fnnas/appstore.games.redroid
 service_port          = 5555
+disable_authorization_path = true
