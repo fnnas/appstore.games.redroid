@@ -4,6 +4,7 @@
 
 .sisyphus
 .claude
+.DS_Store
 
 # CI packaging artifacts
 /*.tgz

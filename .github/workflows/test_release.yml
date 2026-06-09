@@ -1,0 +1,191 @@
+name: Test Release
+run-name: ${{ github.actor }} build ${{ github.ref_name }} sha ${{ github.sha }}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  workflow_dispatch:
+    inputs:
+      make_release:
+        description: "Do you want to create a release?"
+        required: true
+        type: boolean
+        default: false
+  pull_request:
+  push:
+
+env:
+  package_dir: package_aarch64
+
+jobs:
+  pack_package:
+    runs-on: ubuntu-latest
+    outputs:
+      package_name: ${{ steps.vars.outputs.package_name }}
+      package_version: ${{ steps.vars.outputs.package_version }}
+      package_revision: ${{ steps.vars.outputs.package_revision }}
+      artifact_name: ${{ steps.vars.outputs.artifact_name }}
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v6
+
+      - name: Prepare build variables
+        id: vars
+        run: |
+          manifest_value() {
+            awk -F '=' -v key="$1" '
+              {
+                k = $1
+                gsub(/^[ \t]+|[ \t]+$/, "", k)
+                if (k == key) {
+                  v = $2
+                  sub(/^[ \t]+/, "", v)
+                  sub(/[ \t\r]+$/, "", v)
+                  print v
+                  exit
+                }
+              }
+            ' "${{ env.package_dir }}/manifest"
+          }
+
+          package_name="$(manifest_value appname)"
+          package_version="$(manifest_value version)"
+          package_revision="$(git rev-parse --short HEAD)"
+          artifact_name="${package_name}-${package_version}-${package_revision}-aarch64.tgz.fpk"
+
+          test -n "${package_name}"
+          test -n "${package_version}"
+
+          echo "package_name=${package_name}" >> "$GITHUB_OUTPUT"
+          echo "package_version=${package_version}" >> "$GITHUB_OUTPUT"
+          echo "package_revision=${package_revision}" >> "$GITHUB_OUTPUT"
+          echo "artifact_name=${artifact_name}" >> "$GITHUB_OUTPUT"
+
+      - name: Check shell syntax
+        run: |
+          find "${{ env.package_dir }}/cmd" -maxdepth 1 -type f -print0 |
+            while IFS= read -r -d '' file; do
+              first_line="$(head -n 1 "$file")"
+              if [ "$first_line" = "#!/bin/bash" ] || [ "$first_line" = "#!/bin/sh" ]; then
+                echo "bash -n $file"
+                bash -n "$file"
+              fi
+            done
+
+      - name: Check package JSON files
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          package_dir = Path("package_aarch64")
+          required_json_files = [
+              package_dir / "config" / "resource",
+              package_dir / "config" / "privilege",
+              package_dir / "app" / "ui" / "config",
+          ]
+
+          for path in required_json_files:
+              json.loads(path.read_text(encoding="utf-8"))
+              print(f"json ok: {path}")
+
+          wizard_dir = package_dir / "wizard"
+          if wizard_dir.exists():
+              for path in sorted(p for p in wizard_dir.iterdir() if p.is_file()):
+                  json.loads(path.read_text(encoding="utf-8"))
+                  print(f"json ok: {path}")
+          PY
+
+      - name: Check package files
+        run: |
+          test -f "${{ env.package_dir }}/manifest"
+          test -f "${{ env.package_dir }}/config/resource"
+          test -f "${{ env.package_dir }}/config/privilege"
+          test -f "${{ env.package_dir }}/app/docker/docker-compose.yaml"
+          test -f "${{ env.package_dir }}/app/ui/config"
+          test -f "${{ env.package_dir }}/ICON.PNG"
+          test -f "${{ env.package_dir }}/ICON_256.PNG"
+
+      - name: Create app payload archive
+        run: |
+          cd "${{ env.package_dir }}"
+          tar zcvf app.tgz app
+
+      - name: Create package archive
+        run: |
+          tar zcvf "${{ steps.vars.outputs.artifact_name }}" \
+            --exclude='${{ env.package_dir }}/app' \
+            "${{ env.package_dir }}"
+
+      - name: Upload package artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ steps.vars.outputs.artifact_name }}
+          path: ${{ steps.vars.outputs.artifact_name }}
+
+  create_release:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.make_release }}
+    needs:
+      - pack_package
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          release_tag="${{ needs.pack_package.outputs.package_version }}"
+          release_title="${{ needs.pack_package.outputs.package_name }}-${release_tag}"
+
+          if gh release view "${release_tag}" --repo "${GITHUB_REPOSITORY}" >/dev/null 2>&1; then
+            echo "Release ${release_tag} already exists, skipping create."
+          else
+            gh release create "${release_tag}" \
+              --repo "${GITHUB_REPOSITORY}" \
+              --title "${release_title}" \
+              --prerelease
+          fi
+
+  upload_release_assets:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.make_release }}
+    needs:
+      - pack_package
+      - create_release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download package
+        uses: actions/download-artifact@v7
+        with:
+          name: ${{ needs.pack_package.outputs.artifact_name }}
+          path: release-assets/
+
+      - name: Upload Release Assets
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload \
+            "${{ needs.pack_package.outputs.package_version }}" \
+            "release-assets/${{ needs.pack_package.outputs.artifact_name }}" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --clobber
+
+  verify_release_assets:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.make_release }}
+    needs:
+      - pack_package
+      - upload_release_assets
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify uploaded assets
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release view \
+            "${{ needs.pack_package.outputs.package_version }}" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --json assets \
+            -q '.assets[].name'
