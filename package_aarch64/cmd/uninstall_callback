@@ -2,4 +2,10 @@
 
 ### This script is called after the user uninstalls the application.
 
+DATA_DIR="${TRIM_PKGHOME}/data"
+
+if [ -n "${TRIM_PKGHOME}" ] && [ "${DATA_DIR}" = "${TRIM_PKGHOME}/data" ]; then
+    rm -rf -- "${DATA_DIR}"
+fi
+
 exit 0
