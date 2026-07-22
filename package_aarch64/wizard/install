@@ -1,39 +1,39 @@
 [
     {
-        "stepTitle": "安装前确认",
+        "stepTitle": "${install.step_title}",
         "items": [
             {
                 "type": "tips",
-                "helpText": "RedroidContainer 是基于 redroid-rk3588 的 Android 容器环境，默认开放 ADB 5555 端口。首次启动会拉取容器镜像，网络不佳时耗时可能较久，请耐心等待。"
+                "helpText": "${install.intro}"
             },
             {
                 "type": "tips",
-                "helpText": "<strong>安全提示：</strong>请正确配置防火墙，仅允许可信设备访问 ADB 5555 端口，避免意外的非授权访问。"
+                "helpText": "${install.security}"
             },
             {
                 "type": "tips",
-                "helpText": "<strong>风险警告：</strong>未经额外适配处理的 redroid 运行部分游戏、社交、支付、金融或强风控应用时，可能被识别为异常环境，存在登录受限、设备拉黑、账号封禁、资产冻结或服务永久不可用等风险。请勿使用重要账号直接测试，相关后果需由用户自行评估并承担。"
+                "helpText": "${install.risk}"
             },
             {
                 "type": "tips",
-                "helpText": "<strong>高权限容器警告：</strong>RedroidContainer 以高权限容器方式运行，容器内运行的恶意软件可能通过已挂载设备、开放端口或容器权限影响宿主机系统。请仅安装和运行可信来源的应用。"
+                "helpText": "${install.privileged}"
             },
             {
                 "type": "tips",
-                "helpText": "<strong>操作警告：</strong>请不要手动修改本应用的 docker-compose.yaml，也不要绕过应用中心直接创建、删除、重命名或重建对应容器。错误操作可能导致 Android 数据目录损坏、应用数据丢失、容器无法启动或后续升级卸载异常。"
+                "helpText": "${install.operation}"
             },
             {
                 "type": "tips",
-                "helpText": "本应用由飞牛热心用户打包，如遇使用问题请不要向飞牛官方反馈。"
+                "helpText": "${install.support}"
             },
             {
                 "type": "switch",
                 "field": "wizard_risk_acknowledged",
-                "label": "我已阅读并理解上述说明和风险提示",
+                "label": "${install.ack_label}",
                 "rules": [
                     {
                         "required": true,
-                        "message": "请先确认已阅读并理解说明和风险提示"
+                        "message": "${install.ack_message}"
                     }
                 ]
             }

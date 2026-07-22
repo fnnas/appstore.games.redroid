@@ -1,0 +1,13 @@
+[manifest]
+desc="An Android container environment based on redroid-rk3588. ADB port 5555 is exposed by default.<br>Risk warning: Without additional adaptation, some games, social, payment, financial, or other high-risk-control applications may identify redroid as an abnormal environment. This may result in login restrictions, device blacklisting, account suspension, asset freezes, or permanent loss of service.<br>Do not test with important accounts. You are solely responsible for assessing and accepting these risks.<br>The container image is pulled on first startup. This may take a long time on slow networks; please wait.<br>Configure your firewall correctly and allow access to ADB port 5555 only from trusted devices to prevent unauthorized access.<br>This application was packaged by a community volunteer. Do not contact the system vendor about usage issues."
+
+[install]
+step_title="Installation Confirmation"
+intro="RedroidContainer is an Android container environment based on redroid-rk3588. ADB port 5555 is exposed by default. The container image is pulled on first startup, which may take a long time on slow networks; please wait."
+security="<strong>Security notice:</strong> Configure your firewall correctly and allow access to ADB port 5555 only from trusted devices to prevent unauthorized access."
+risk="<strong>Risk warning:</strong> Without additional adaptation, some games, social, payment, financial, or other high-risk-control applications may identify redroid as an abnormal environment. This may result in login restrictions, device blacklisting, account suspension, asset freezes, or permanent loss of service. Do not test with important accounts. You are solely responsible for assessing and accepting these risks."
+privileged="<strong>Privileged container warning:</strong> RedroidContainer runs as a privileged container. Malware running inside the container may affect the host system through mounted devices, exposed ports, or container privileges. Install and run applications only from trusted sources."
+operation="<strong>Operational warning:</strong> Do not manually modify this application's docker-compose.yaml or bypass App Center to create, remove, rename, or recreate its container. Incorrect operations may corrupt Android data, cause application data loss, prevent the container from starting, or break later upgrades and uninstallation."
+support="This application was packaged by a community volunteer. Do not contact the system vendor about usage issues."
+ack_label="I have read and understand the information and risk warnings above"
+ack_message="Please confirm that you have read and understand the information and risk warnings"

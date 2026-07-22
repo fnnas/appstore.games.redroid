@@ -1,7 +1,7 @@
 appname               = appstore-games-redroid
 version               = this_pack_manifest_version
 display_name          = RedroidContainer
-desc                  = 基于 redroid-rk3588 的 Android 容器环境，默认开放 ADB 5555 端口。<br>风险警告：未经额外适配处理的 redroid 运行部分游戏、社交、支付、金融或强风控应用时，可能被识别为异常环境，存在登录受限、设备拉黑、账号封禁、资产冻结或服务永久不可用等风险。<br>请勿使用重要账号直接测试，相关后果需由用户自行评估并承担。<br>首次启动会拉取容器镜像，网络不佳时耗时可能较久，请耐心等待。<br>请正确配置防火墙，仅允许可信设备访问该端口，避免意外的非授权访问。<br>本应用由飞牛热心用户打包，如遇使用问题请不要向飞牛官方反馈。
+desc                  = ${manifest.desc}
 platform              = arm
 source                = thirdparty
 os_min_version        = 1.1.3100
