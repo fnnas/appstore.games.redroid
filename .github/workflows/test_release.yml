@@ -21,6 +21,9 @@ on:
 
 env:
   package_dir: package_aarch64
+  source_version: "lineage-20.1"
+  # Reset to 1 for a new source_version; increment when rebuilding the same source_version.
+  package_build: "1"
 
 jobs:
   pack_package:
@@ -30,6 +33,7 @@ jobs:
       package_version: ${{ steps.vars.outputs.package_version }}
       package_revision: ${{ steps.vars.outputs.package_revision }}
       artifact_name: ${{ steps.vars.outputs.artifact_name }}
+      release_tag: ${{ steps.vars.outputs.release_tag }}
     steps:
       - name: Check out repository code
         uses: actions/checkout@v6
@@ -54,9 +58,24 @@ jobs:
           }
 
           package_name="$(manifest_value appname)"
-          package_version="$(manifest_value version)"
+          source_version="${{ env.source_version }}"
+          package_build="${{ env.package_build }}"
+
+          if [[ ! "${source_version}" =~ ^lineage-([0-9]+)(\.[0-9]+)*$ ]]; then
+            echo "source_version must use the lineage-x.y format: ${source_version}" >&2
+            exit 1
+          fi
+
+          if [[ ! "${package_build}" =~ ^[1-9][0-9]*$ ]]; then
+            echo "package_build must be a positive integer: ${package_build}" >&2
+            exit 1
+          fi
+
+          source_version_number="${source_version#lineage-}"
+          package_version="0.${source_version_number}-${package_build}"
           package_revision="$(git rev-parse --short HEAD)"
           artifact_name="${package_name}-${package_version}-${package_revision}-aarch64.tgz.fpk"
+          release_tag="$(date +%Y%m%d%H%M)-${source_version}"
 
           test -n "${package_name}"
           test -n "${package_version}"
@@ -65,6 +84,7 @@ jobs:
           echo "package_version=${package_version}" >> "$GITHUB_OUTPUT"
           echo "package_revision=${package_revision}" >> "$GITHUB_OUTPUT"
           echo "artifact_name=${artifact_name}" >> "$GITHUB_OUTPUT"
+          echo "release_tag=${release_tag}" >> "$GITHUB_OUTPUT"
 
       - name: Check shell syntax
         run: |
@@ -110,11 +130,16 @@ jobs:
           test -f "${{ env.package_dir }}/app/ui/config"
           test -f "${{ env.package_dir }}/ICON.PNG"
           test -f "${{ env.package_dir }}/ICON_256.PNG"
+          grep -q 'this_pack_manifest_version' "${{ env.package_dir }}/manifest"
+
+      - name: Render package manifest
+        run: |
+          sed -i "s/this_pack_manifest_version/${{ steps.vars.outputs.package_version }}/g" "${{ env.package_dir }}/manifest"
+          grep -q "^version[[:space:]]*=[[:space:]]*${{ steps.vars.outputs.package_version }}$" "${{ env.package_dir }}/manifest"
 
       - name: Create app payload archive
         run: |
-          cd "${{ env.package_dir }}"
-          tar zcvf app.tgz app
+          tar zcvf "${{ env.package_dir }}/app.tgz" --exclude='.DS_Store' -C "${{ env.package_dir }}/app" .
 
       - name: Create package archive
         run: |
@@ -138,8 +163,8 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          release_tag="${{ needs.pack_package.outputs.package_version }}"
-          release_title="${{ needs.pack_package.outputs.package_name }}-${release_tag}"
+          release_tag="${{ needs.pack_package.outputs.release_tag }}"
+          release_title="${release_tag}"
 
           if gh release view "${release_tag}" --repo "${GITHUB_REPOSITORY}" >/dev/null 2>&1; then
             echo "Release ${release_tag} already exists, skipping create."
@@ -168,7 +193,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release upload \
-            "${{ needs.pack_package.outputs.package_version }}" \
+            "${{ needs.pack_package.outputs.release_tag }}" \
             "release-assets/${{ needs.pack_package.outputs.artifact_name }}" \
             --repo "${GITHUB_REPOSITORY}" \
             --clobber
@@ -185,7 +210,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release view \
-            "${{ needs.pack_package.outputs.package_version }}" \
+            "${{ needs.pack_package.outputs.release_tag }}" \
             --repo "${GITHUB_REPOSITORY}" \
             --json assets \
             -q '.assets[].name'
